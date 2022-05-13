@@ -1,0 +1,103 @@
+#include <iostream>
+#include <chrono>
+#include <fstream>
+#include <string>
+#include <sstream>
+using namespace std;
+
+float time_avg = 0; //sum of the avarage times of all loops from the same file
+float final_avg = 0; //sum of the avarage times of all loops from all of the files
+
+class Timer
+{
+public:
+    Timer()
+    {
+        //start the timer upon creation
+        m_StartTimer = std::chrono::high_resolution_clock::now();
+    }
+
+    ~Timer()
+    {
+        //stop the timer upon deletion
+        Stop();
+    }
+    void Stop()
+    {
+        //endpoint of timer set on object deletion
+        auto endTimepoint = std::chrono::high_resolution_clock::now();
+
+        //getting the start time of the timer
+        auto start = std::chrono::time_point_cast<std::chrono::seconds>(m_StartTimer).time_since_epoch().count();
+
+        //getting the end time of the timer
+        auto end = std::chrono::time_point_cast<std::chrono::seconds>(endTimepoint).time_since_epoch().count();
+
+        //calculating the duration (microsec. -> milisec. for precision) and adding it to the time_avg 
+        float duration = end - start;
+        time_avg += duration;
+    }
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTimer;
+};
+
+
+int main()
+{
+    unsigned nr_of_files; //<---- here
+    float curr_avg = 0;
+    long nr_of_elements = 0, min_idx,key;
+    int i, j;
+
+    //creating the arrays for counting sort
+    long* initial_arr = new long[1000001];
+
+    //creating the stringstream used for opening multiple files
+    std::stringstream ss;
+    string front = "samples/1mil/1mil_";
+    string base = ".text";
+
+    int loops = 0;
+    nr_of_files = 50; //<------------------------------------ here
+
+    //loop for opening each file
+    for (unsigned k = 50; k <= nr_of_files; k++)
+    {
+        loops++;
+        nr_of_elements = 0;
+        time_avg = 0;
+
+        //forming the name of the file we need to open with the ifstream
+        ss << front << to_string(k) << base;
+        ifstream fin(ss.str());
+
+        //reading the numbers from the file
+        while (fin >> initial_arr[nr_of_elements])
+            ++nr_of_elements;
+
+        //start of the timer
+        {
+            Timer timer;
+            //THIS IS WHERE THE ALGORITHM IS INSERTED
+        }
+        // the timer ends here upon the deletion of obj "timer"
+
+        //calculating the average time of all the while loops
+        curr_avg = time_avg;
+        std::cout << curr_avg << " s " << k << std::endl; // nr_of_files;
+
+        //adding the avg time of the loops in the final average
+        final_avg += curr_avg;
+
+        //clearing the stringstream
+        ss.str("");
+        ss.clear();
+
+        fin.close();
+    }
+
+    delete[] initial_arr;
+    std::cout << "Final time: " << final_avg / loops;
+    return 0;
+}
+
